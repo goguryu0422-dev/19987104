@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>제재·사고 워치</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --bg:#f4f5f7; --surface:#ffffff; --ink:#18202b; --muted:#5d6878; --line:#dde1e7;
+  --accent:#1f4a8a; --accent-soft:#e6edf8;
+  --sanction:#a2361f; --sanction-soft:#f9e9e4;
+  --incident:#8a5a00; --incident-soft:#f8efd9;
+  --ok:#2c6b45; --ok-soft:#e3f1e8;
+  --f-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#11151b; --surface:#181e26; --ink:#e6e9ee; --muted:#9aa4b2; --line:#2a323d;
+  --accent:#8db3ee; --accent-soft:#1d2a3d;
+  --sanction:#ef8f78; --sanction-soft:#3a201a;
+  --incident:#e3b45a; --incident-soft:#34290f;
+  --ok:#7cc79a; --ok-soft:#173022; color-scheme:dark}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55}
+.wrap{max-width:960px;margin:0 auto;padding:28px 16px 64px;display:grid;gap:22px}
+header{display:grid;gap:6px}
+.eyebrow{font-size:12px;letter-spacing:.08em;color:var(--muted);font-weight:600}
+h1{margin:0;font-size:26px;font-weight:700;letter-spacing:-.01em}
+.sub{color:var(--muted);font-size:13.5px}
+.mono{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:12px 14px;display:grid;gap:2px}
+.stat b{font-size:24px;font-family:var(--f-mono);font-weight:500}
+.stat span{font-size:12.5px;color:var(--muted)}
+.stat.s b{color:var(--sanction)} .stat.i b{color:var(--incident)}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--surface)}
+.seg button{border:0;background:none;color:var(--muted);font:inherit;font-size:13.5px;padding:7px 12px;cursor:pointer}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);font-weight:600}
+input[type=search],input[type=text],input[type=date],select,textarea{font:inherit;font-size:14px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:7px 10px;min-width:0}
+#q{flex:1 1 180px}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,a:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:999px;font:inherit;font-size:12.5px;padding:4px 10px;cursor:pointer}
+.chip[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.day{display:grid;gap:8px}
+.day h2{margin:0;font-size:13px;font-weight:600;color:var(--muted);display:flex;gap:8px;align-items:baseline;border-bottom:1px solid var(--line);padding-bottom:6px}
+.item{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--sanction);border-radius:6px;padding:12px 14px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 14px}
+.item.incident{border-left-color:var(--incident)}
+.item.done{opacity:.62}
+.meta{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12px}
+.tag{border-radius:4px;padding:1px 7px;font-weight:600}
+.tag.k-s{background:var(--sanction-soft);color:var(--sanction)}
+.tag.k-i{background:var(--incident-soft);color:var(--incident)}
+.tag.ag{background:var(--accent-soft);color:var(--accent)}
+.tag.ty{border:1px solid var(--line);color:var(--muted);font-weight:500}
+.item h3{margin:0;font-size:15.5px;font-weight:600;grid-column:1}
+.amt{font-family:var(--f-mono);font-size:13px}
+.item p{margin:0;grid-column:1/-1;font-size:14px;max-width:72ch}
+.foot{grid-column:1/-1;display:flex;flex-wrap:wrap;gap:12px;align-items:center;font-size:12.5px;color:var(--muted)}
+.foot a{color:var(--accent)}
+.foot button{font:inherit;font-size:12px;border:1px solid var(--line);background:none;color:var(--muted);border-radius:4px;padding:1px 8px;cursor:pointer}
+.chk{grid-column:2;grid-row:1/3;align-self:start;display:flex;gap:6px;align-items:center;font-size:12.5px;color:var(--muted);cursor:pointer;white-space:nowrap}
+.chk input{width:16px;height:16px;accent-color:var(--ok)}
+.empty{background:var(--surface);border:1px dashed var(--line);border-radius:6px;padding:22px;color:var(--muted);font-size:14px}
+.links{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px}
+.links a{display:grid;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:10px 12px;color:var(--ink);text-decoration:none}
+.links a:hover{border-color:var(--accent)}
+.links small{color:var(--muted);font-size:12px}
+section>h2.sec{margin:0 0 8px;font-size:14px;font-weight:700}
+details{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:10px 14px}
+summary{cursor:pointer;font-weight:600;font-size:14px}
+form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}
+form .full{grid-column:1/-1}
+form label{display:grid;gap:3px;font-size:12px;color:var(--muted)}
+.btn{font:inherit;font-size:14px;border:0;border-radius:6px;background:var(--accent);color:var(--surface);padding:8px 14px;cursor:pointer;justify-self:start}
+.btn.ghost{background:none;color:var(--accent);border:1px solid var(--line)}
+.note{font-size:12.5px;color:var(--muted)}
+@media (max-width:560px){.stat b{font-size:20px}form{grid-template-columns:1fr}.item{grid-template-columns:1fr}.chk{grid-column:1;grid-row:auto}}
+@media print{.bar,.chips,details,#exportBtn{display:none!important}.item{break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">내부통제 · 외부 제재/사고 모니터링</div>
+    <h1>금융당국 제재 · 금융사고 워치</h1>
+    <div class="sub">기준일 <span class="mono" id="today">—</span> · 조회 범위 <span class="mono" id="range">—</span> · 데이터 기준 <span class="mono" id="updated">—</span> (<span id="note">—</span>)</div>
+  </header>
+
+  <div class="stats">
+    <div class="stat s"><b id="nS">0</b><span>제재·조치</span></div>
+    <div class="stat i"><b id="nI">0</b><span>금융사고</span></div>
+    <div class="stat"><b id="nU">0</b><span>미검토</span></div>
+  </div>
+
+  <div class="bar">
+    <div class="seg" role="group" aria-label="기간">
+      <button id="p7" aria-pressed="true">최근 7일</button>
+      <button id="p30" aria-pressed="false">최근 30일</button>
+      <button id="pAll" aria-pressed="false">전체</button>
+    </div>
+    <div class="seg" role="group" aria-label="구분">
+      <button data-k="all" aria-pressed="true">전체</button>
+      <button data-k="sanction" aria-pressed="false">제재</button>
+      <button data-k="incident" aria-pressed="false">사고</button>
+    </div>
+    <input type="search" id="q" placeholder="기관명·회사명·키워드 검색">
+  </div>
+  <div class="chips" id="agencies" aria-label="기관 필터"></div>
+
+  <main id="list" style="display:grid;gap:18px"></main>
+
+  <details>
+    <summary>직접 기록 추가 (이 브라우저에만 저장)</summary>
+    <form id="addForm">
+      <label>구분<select id="fKind"><option value="sanction">제재·조치</option><option value="incident">금융사고</option></select></label>
+      <label>일자<input type="date" id="fDate" required></label>
+      <label>기관(조치/공시 주체)<input type="text" id="fAgency" placeholder="금감원, 금융위, 증선위, 거래소…" required></label>
+      <label>유형<input type="text" id="fType" placeholder="과징금, 기관경고, 횡령, 정보유출…"></label>
+      <label>대상 회사<input type="text" id="fTarget" required></label>
+      <label>금액<input type="text" id="fAmount" placeholder="예: 과징금 76.3억원"></label>
+      <label class="full">요약<textarea id="fSummary" rows="3" required></textarea></label>
+      <label class="full">출처 URL<input type="text" id="fUrl" placeholder="https://"></label>
+      <button class="btn full" type="submit">기록 추가</button>
+      <div class="note full" id="fMsg"></div>
+    </form>
+  </details>
+
+  <div><button class="btn ghost" id="exportBtn" type="button">전체 기록 JSON 내보내기</button></div>
+
+  <section>
+    <h2 class="sec">공식 원문 바로가기</h2>
+    <div class="links">
+      <a href="https://www.fss.or.kr/fss/main/sub6.do?menuNo=200747" target="_blank" rel="noopener"><b>금감원 제재관련 공시</b><small>검사결과제재 · 제재심의 · 공시조사</small></a>
+      <a href="https://www.fsc.go.kr/no010101" target="_blank" rel="noopener"><b>금융위 보도자료</b><small>정례회의 의결 · 과징금 부과</small></a>
+      <a href="https://www.fsc.go.kr/no070300" target="_blank" rel="noopener"><b>증선위 불공정거래 조치</b><small>고발 · 통보 · 과징금</small></a>
+      <a href="https://www.krx.co.kr" target="_blank" rel="noopener"><b>한국거래소</b><small>시장감시위원회 회원 제재</small></a>
+      <a href="https://dart.fss.or.kr" target="_blank" rel="noopener"><b>DART 전자공시</b><small>금융사고 · 횡령배임 공시</small></a>
+    </div>
+    <p class="note">이 파일은 데이터 기준 시점의 스냅숏입니다. 기록은 언론 보도와 당국 보도자료 기준이며, 제재 원문(조치일·근거조항)은 위 공식 공시로 확인하세요. 검토 체크와 직접 추가한 기록은 이 브라우저에만 저장됩니다.</p>
+  </section>
+</div>
+
+<script id="seed" type="application/json">{"meta": {"baseDate": "2026-10-19", "updatedAt": "2026-10-19 16:32 KST", "note": "신규 4건"}, "items": [{"addedAt": "2026-10-19T05:00:00Z", "agency": "증선위", "amount": "", "date": "2026-10-01", "kind": "sanction", "sector": "상장사", "source": "금융위 보도자료", "summary": "9/30 제17차 증선위 의결. 상장법인 대표의 시세조종 등 불공정거래 3건에 대해 조치. 세부 대상과 조치 내용은 금융위 보도자료 원문 확인 필요.", "target": "법인 대표 시세조종 등 3건", "type": "불공정거래 조치", "url": "https://www.newspim.com/news/view/20260930001344", "id": "2026-10-01-sfc-manipulation"}, {"addedAt": "2026-10-19T05:00:00Z", "agency": "금융위", "amount": "금양 76.3억원 · 어센디오 7.3억원", "date": "2026-10-07", "kind": "sanction", "sector": "상장사·회계법인", "source": "뉴스핌", "summary": "금양은 가공거래로 약 103억원 허위 매출 계상, 몽골 합작법인 연결범위·손상 미인식, 감사 방해. 어센디오는 종속기업 투자 손상 295억원 미인식. 금양 임원 6명 약 15.2억원, 어센디오 전 임원 3명 약 1.6억원 과징금 별도. 감사인 태율 0.8억원, 선진 0.2억원.", "target": "금양 · 어센디오 · 태율회계법인 · 선진회계법인", "type": "과징금", "url": "https://www.newspim.com/news/view/20261007001484", "id": "2026-10-07-geumyang"}, {"addedAt": "2026-10-19T05:00:00Z", "agency": "국정감사 지적", "amount": "총 약 1,110억원 (6~8월 공시 3건)", "date": "2026-10-12", "kind": "incident", "sector": "은행", "source": "한국금융신문", "summary": "2026년 6~8월 외부인 사기 금융사고 3건 공시. 중국법인 현지 제휴 플랫폼 대리인 사기 약 834억원, 국내 부동산 담보대출 허위매매 사기 약 182억원 등. 사고 보고 후에도 약 19억원 추가 대출 실행 지적.", "target": "IBK기업은행", "type": "외부인 사기", "url": "https://www.fntimes.com/html/view.php?ud=202610121447015152b4a7c6999c_18", "id": "2026-10-12-ibk-fraud"}, {"addedAt": "2026-10-19T05:00:00Z", "agency": "금융당국 신고", "amount": "새마을금고 고객 약 400명", "date": "2026-10-13", "kind": "incident", "sector": "상호금융·저축은행", "source": "SBS", "summary": "10/13 새마을금고와 OK저축은행에서 신규 침해 신고. 새마을금고는 고객 약 400명의 이름·주소·암호화된 주민번호 일부 유출, OK저축은행은 유출 여부 확인 중. 신한·KB국민은행 현장검사 진행, 예가람·웰컴저축은행 검사 착수.", "target": "새마을금고 · OK저축은행", "type": "해킹·정보유출", "url": "https://news.sbs.co.kr/news/endPage.do?news_id=N1008796311", "id": "2026-10-13-mg-ok-breach"}, {"addedAt": "2026-10-19T05:00:00Z", "agency": "금융위·금감원", "amount": "개인정보 약 10만건 유출", "date": "2026-10-14", "kind": "incident", "sector": "은행·저축은행·여전·가상자산", "source": "서플 · 파이낸셜뉴스", "summary": "신한·KB국민·하나·BNK부산은행, 예가람·웰컴·OK·DB저축은행, 현대캐피탈·산은캐피탈, 새마을금고중앙회, PFCT·모우다·브라이트픽스, 스트리미(고팍스)·프라뱅에서 침해사고. 555개사 보안 점검 중 130곳 미흡. 대형사 검사 연 2회 이상으로 확대, CEO·CISO·CIO 보고·책임 체계 명확화 추진. 피해 회사 수는 더 늘 수 있다고 당국 언급.", "target": "금융권 침해사고 16개사", "type": "해킹·정보유출", "url": "https://supple.kr/news/cmv7zf8i1000xxug8hp37tght", "id": "2026-10-14-breach-16"}, {"addedAt": "2026-10-19T05:00:00Z", "agency": "증선위", "amount": "", "date": "2026-10-14", "kind": "sanction", "sector": "상장사·회계법인", "source": "아시아경제", "summary": "2021~2023년 허위 세금계산서로 매출·매출원가를 부풀리고 감사 증빙을 위조·타사 재고를 자사 재고로 제시해 외부감사를 방해. 회사 감사인지정 3년, 전 대표 등 4명 수사기관 통보. 정진세림·선진회계법인은 손해배상공동기금 20% 추가적립과 해당 회사 감사업무 2년 제한, 담당 회계사 감사업무 제한 조치.", "target": "한주에이알티 (코스닥) 외 감사인 2곳", "type": "감사인지정·수사기관 통보", "url": "https://view.asiae.co.kr/article/2026101418092849927", "id": "2026-10-14-hanju-art"}, {"addedAt": "2026-10-19T07:31:00Z", "agency": "중국인민은행 베이징분행", "amount": "약 248.9만 위안(약 5억원) · 전 법인장 약 8.3만 위안", "date": "2026-10-16", "kind": "sanction", "sector": "은행", "source": "뉴스핌", "summary": "6/2 중국인민은행이 금융통계·계좌관리·신용정보 등 9개 위반으로 경고와 벌금 부과, 이 중 2건은 네트워크·데이터 보안 관리 위반(장비 업데이트 미적용, 내부 업무데이터 비식별화 미흡). 신한은 고객정보와 무관하고 국내 유출 사고와도 관련 없다는 입장(10/16 보도).", "target": "신한은행(중국)유한공사", "type": "경고·벌금", "url": "https://www.newspim.com/news/view/20261016000074", "id": "2026-10-16-shinhan-china-pboc"}, {"addedAt": "2026-10-19T07:31:00Z", "agency": "금감원", "amount": "2차 268명 (1·2차 합계 518명)", "date": "2026-10-18", "kind": "incident", "sector": "저축은행", "source": "아주경제", "summary": "10/11 대출신청 웹페이지 1차 침해(250명)에 이어 10/15 모바일 수신서비스 페이지에서 2차 침해 발생, 이름·계좌번호·잔액·이율 등 268명 정보 유출. 10/16 금감원에 접수돼 현장점검 진행 중이며 정식 검사 전환도 검토.", "target": "OK저축은행", "type": "해킹·정보유출", "url": "https://www.ajunews.com/view/20261018170426068", "id": "2026-10-18-ok-savings-2nd-breach"}, {"addedAt": "2026-10-19T07:31:00Z", "agency": "금감원", "amount": "", "date": "2026-10-18", "kind": "sanction", "sector": "증권", "source": "중앙이코노미뉴스", "summary": "종목추천 서비스 가입 고객에게 추천과 무관한 해외주식 거래까지 최대 0.25%p 가산수수료를 부과하고 매매명세에 수수료 구분을 하지 않은 점 등으로 경영유의 4건·개선 1건 조치(8/31 통보, 10/18 보도). 이벤트 보상한도·이해상충 검토, 협의수수료·환율우대 기준, 외화예탁금 이용료 내규화 미흡도 지적.", "target": "신한투자증권", "type": "경영유의", "url": "https://www.joongangenews.com/news/articleView.html?idxno=555868", "id": "2026-10-18-shinhan-sec-fee"}, {"addedAt": "2026-10-19T05:00:00Z", "agency": "국정감사 자료", "amount": "5년간 38건 약 200억원", "date": "2026-10-18", "kind": "incident", "sector": "은행·상호금융", "source": "아시아경제", "summary": "2021~2025년 금융사고 38건. 수협은행 사기 피해계좌는 2026년 1~9월 85건·9.28억원으로 2024년 연간(4건) 대비 급증. 내부통제 미작동 지적.", "target": "수협은행 · 수협 상호금융", "type": "금융사고 통계", "url": "https://view.asiae.co.kr/article/2026101817003780808", "id": "2026-10-18-suhyup"}, {"addedAt": "2026-10-19T05:00:00Z", "agency": "금감원 자료(국감)", "amount": "30일 초과 인지 91건", "date": "2026-10-19", "kind": "incident", "sector": "보험·은행·전자금융", "source": "뉴스핌", "summary": "2022~2026.8 전자금융·침해사고 2,189건 중 91건(43개사)이 발생 30일 뒤 인지, 17건은 1년 이상. 롯데손보 902일, 토스뱅크 670일, AIA생명 621일, 하나은행 507일, 신한은행 471일. 89%가 프로그램 오류.", "target": "롯데손보 · 토스뱅크 · AIA생명 · 하나은행 등", "type": "전자금융사고 인지 지연", "url": "https://www.newspim.com/news/view/20261019000181", "id": "2026-10-19-efin-delay"}, {"addedAt": "2026-10-19T07:31:00Z", "agency": "국정감사 지적", "amount": "", "date": "2026-10-19", "kind": "incident", "sector": "증권", "source": "서울파이낸스", "summary": "금감원 국감에서 2019~2020년 부산WM센터가 투자경험 없는 은행 고객에게 부동산펀드 4개를 판매하며 원금손실 등 핵심 위험을 빼고 내부 참고자료를 설명에 쓰는 등 사전심의도 누락했다는 의혹 제기. 일부 손실 확정·소송 중이며 금감원장은 위법 여부 점검 의사를 밝힘(의원 주장 기반, 회사 입장 미확인).", "target": "IBK투자증권", "type": "불완전판매 의혹", "url": "https://www.seoulfn.com/news/articleView.html?idxno=640406", "id": "2026-10-19-ibk-sec-misselling"}]}</script>
+<script>
+(function(){
+  const SEED=JSON.parse(document.getElementById('seed').textContent);
+  const $=s=>document.querySelector(s);
+  const pad=n=>String(n).padStart(2,'0');
+  const iso=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+  // 기준일 = 데이터 기준일 (파일을 나중에 열어도 기간 필터가 비지 않도록)
+  const baseStr=SEED.meta.baseDate;
+  const base=new Date(baseStr+'T00:00:00');
+  const LS={rev:'sw_file_reviewed',own:'sw_file_own',per:'sw_file_period'};
+  const load=(k,d)=>{try{const v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch(e){return d;}};
+  const save=(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}};
+
+  let period=load(LS.per,7), kind='all', agency=null, q='';
+  let reviewed=load(LS.rev,{}), own=load(LS.own,[]);
+  const items=()=>SEED.items.concat(own);
+
+  function fromDate(){if(!period)return '0000-00-00';const d=new Date(base);d.setDate(d.getDate()-period);return iso(d);}
+  function setPressed(){
+    $('#p7').setAttribute('aria-pressed',period===7);$('#p30').setAttribute('aria-pressed',period===30);$('#pAll').setAttribute('aria-pressed',!period);
+    document.querySelectorAll('[data-k]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.k===kind));
+    $('#today').textContent=baseStr;$('#range').textContent=period?fromDate()+' ~ '+baseStr:'전체';
+  }
+  const wd=['일','월','화','수','목','금','토'];
+  function el(tag,cls,text){const e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=text;return e;}
+
+  function render(){
+    setPressed();
+    const from=fromDate();
+    const inRange=items().filter(x=>x.date>=from&&(!period||x.date<=baseStr));
+    const ags=[...new Set(inRange.map(x=>x.agency).filter(Boolean))].sort();
+    const ch=$('#agencies');ch.textContent='';
+    if(ags.length>1){
+      const all=el('button','chip','모든 기관');all.setAttribute('aria-pressed',agency===null);all.onclick=()=>{agency=null;render();};ch.append(all);
+      ags.forEach(a=>{const b=el('button','chip',a);b.setAttribute('aria-pressed',agency===a);b.onclick=()=>{agency=agency===a?null:a;render();};ch.append(b);});
+    }
+    const ql=q.trim().toLowerCase();
+    const shown=inRange.filter(x=>(kind==='all'||x.kind===kind)&&(!agency||x.agency===agency)&&(!ql||[x.target,x.agency,x.type,x.summary,x.amount,x.sector].join(' ').toLowerCase().includes(ql)));
+    $('#nS').textContent=inRange.filter(x=>x.kind==='sanction').length;
+    $('#nI').textContent=inRange.filter(x=>x.kind==='incident').length;
+    $('#nU').textContent=inRange.filter(x=>!reviewed[x.id]).length;
+    const list=$('#list');list.textContent='';
+    if(!shown.length){list.append(el('div','empty','이 조건에 맞는 기록이 없습니다. 기간을 넓히거나 필터를 해제해 보세요.'));return;}
+    shown.sort((a,b)=>b.date.localeCompare(a.date)||a.kind.localeCompare(b.kind));
+    const groups={};shown.forEach(x=>(groups[x.date]=groups[x.date]||[]).push(x));
+    Object.keys(groups).sort().reverse().forEach(d=>{
+      const day=el('div','day');const h=el('h2');const dt=new Date(d+'T00:00:00');
+      h.append(el('span','mono',d),el('span',null,wd[dt.getDay()]+'요일'),el('span',null,groups[d].length+'건'));day.append(h);
+      groups[d].forEach(x=>{
+        const it=el('article','item'+(x.kind==='incident'?' incident':'')+(reviewed[x.id]?' done':''));
+        const m=el('div','meta');
+        m.append(el('span','tag '+(x.kind==='incident'?'k-i':'k-s'),x.kind==='incident'?'사고':'제재'));
+        if(x.agency)m.append(el('span','tag ag',x.agency));
+        if(x.type)m.append(el('span','tag ty',x.type));
+        if(x.sector)m.append(el('span','tag ty',x.sector));
+        it.append(m);
+        it.append(el('h3',null,x.target||''));
+        const lab=el('label','chk');const cb=document.createElement('input');cb.type='checkbox';cb.checked=!!reviewed[x.id];
+        cb.onchange=()=>{if(cb.checked)reviewed[x.id]=true;else delete reviewed[x.id];save(LS.rev,reviewed);render();};
+        lab.append(cb,document.createTextNode('검토완료'));it.append(lab);
+        if(x.amount)it.append(el('div','amt',x.amount));
+        if(x.summary)it.append(el('p',null,x.summary));
+        const f=el('div','foot');
+        if(x.source)f.append(el('span',null,'출처 '+x.source));
+        if(x.url&&/^https?:\/\//.test(x.url)){const a=el('a',null,'원문 보기 ↗');a.href=x.url;a.target='_blank';a.rel='noopener';f.append(a);}
+        if(x.own){const del=el('button',null,'삭제');del.type='button';del.onclick=()=>{own=own.filter(o=>o.id!==x.id);save(LS.own,own);render();};f.append(del);}
+        it.append(f);day.append(it);
+      });
+      list.append(day);
+    });
+  }
+
+  $('#p7').onclick=()=>{period=7;save(LS.per,7);render();};
+  $('#p30').onclick=()=>{period=30;save(LS.per,30);render();};
+  $('#pAll').onclick=()=>{period=0;save(LS.per,0);render();};
+  document.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>{kind=b.dataset.k;render();});
+  $('#q').addEventListener('input',e=>{q=e.target.value;render();});
+  $('#fDate').value=baseStr;
+  $('#updated').textContent=SEED.meta.updatedAt||'—';
+  $('#note').textContent=SEED.meta.note||'';
+
+  $('#addForm').addEventListener('submit',e=>{
+    e.preventDefault();
+    const v=id=>$(id).value.trim();
+    const rec={id:'own-'+Date.now(),own:true,kind:v('#fKind'),date:v('#fDate'),agency:v('#fAgency'),type:v('#fType'),target:v('#fTarget'),amount:v('#fAmount'),summary:v('#fSummary'),url:v('#fUrl'),source:'직접 입력',addedAt:new Date().toISOString()};
+    own.push(rec);save(LS.own,own);
+    $('#fMsg').textContent='추가했습니다. (이 브라우저에만 저장)';
+    ['#fTarget','#fAmount','#fSummary','#fUrl','#fType'].forEach(i=>$(i).value='');
+    render();
+  });
+
+  $('#exportBtn').onclick=()=>{
+    const blob=new Blob([JSON.stringify({meta:SEED.meta,items:items(),reviewed},null,2)],{type:'application/json'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='sanction-watch-'+baseStr+'.json';a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  };
+
+  render();
+})();
+</script>
+</body>
+</html>
